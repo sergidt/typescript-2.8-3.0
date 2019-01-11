@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Typescript since 2.8</title>
+  <meta charset="utf-8">
+  <link rel="stylesheet" type="text/css" href="assets/css/style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/remark/0.14.0/remark.min.js"></script>
+</head>
+
+<body class="remark-container" cz-shortcut-listen="true">
+  <textarea id="source" style="display: none;">name: inverse
+layout: true
+class: top, top, inverse
+---
+
+class: center, middle, inverse
+# Typescript
+## Highlights from 2.8
+
+---
+
+class: center, middle, inverse
+# Typescript 2.8
+
+---
+
+## Never type
+
+* Is a value that never occurs: AKA zero type or empty type
+* Uses
+      * Functions that never return
+      * Type guards that are never true
+---
+
+## Never type
+
+## Characteristics
+  * Is assignable to every type	
+  * No type is assignable to never, except itself
+  * In a function expression with no return type annotation, if the function has no return statements, or only returns statements with expressions of type never, and if the end point of the function is not reachable, the inferred return is never
+  * In a function with an explicit never return type annotation, all return statements (if any) must have expressions of type never and the end point of the function must not be reachable
+---
+
+## Never type: examples
+
+```typescript
+function foo() {
+	while(true) {
+    
+}
+
+// Type: () => never
+```
+
+```typescript
+const failWith = (message: string) =>
+	throw new Error(message);
+
+
+// Type: (string) => never
+
+```
+```typescript
+function typeGuard(value: any) {
+	if (typeof value === ‘string’) {
+  }
+  else { // type never
+  }
+}
+// Type: (any) => never
+
+```
+---
+## Never: Differences with void
+
+* In javascript all functions returns a value. Probably we ignore this type when we don’t return any value. In this cases the return type is void
+
+* A function that has a never return type, never returns: it means that throws and error or never finishes.
+
+* In a function with an explicit never return type annotation, all return statements (if any) must have expressions of type never and the end point of the function must not be reachable
+
+---
+
+## Conditional types
+
+A conditional type describes a type relationship test and selects one of two possible types:
+
+```typescript
+T extends U ? X : Y
+```
+
+Example from Typescript definitions: 
+```typescript
+type NonNullable<T> = T extends null | undefined ? never : T;
+```
+
+---
+
+## Conditional types
+
+### Distributive Conditional Types: Why are conditional types and the **never** type useful? 
+
+* the conditional type is called a distributive conditional type, and it is distributed over a union type when that union type is instantiated
+* Allows us to remove constituent types from a union type checks a naked type parameter
+
+* Since `NonNullable<T>` checks a naked type parameter, it is distributed over a union type A | B: 
+  * This means that `NonNullable<A | B>` is resolved as `NonNullable<A> | NonNullable<B>` 
+  * If `NonNullable<A>` resolves to the never type, we can remove A from the resulting union type
+
+---
+
+## Conditional types
+
+### Distributive Conditional Types: Example
+
+```typescript
+type EmailAddress = string | string[] | null | undefined;
+```
+
+```typescript
+type NonNullableEmailAddress = NonNullable<EmailAddress>;
+  ```
+
+```typescript
+type NonNullableEmailAddress =
+  | string
+  | string[]
+  | never
+  | never;
+```
+
+```typescript
+type NonNullableEmailAddress = string | string[];
+```
+
+---
+## Conditional types: practical examples
+
+### Extract all non-nullable property keys from a type
+
+```typescript
+type NonNullablePropertyKeys<T> = {
+    [P in keyof T]: null extends T[P] ? never : P
+  }[keyof T];
+```
+
+```typescript
+type User = {
+  name: string;
+  email: string | null;
+};
+
+type NonNullableUserPropertyKeys = NonNullablePropertyKeys<User>;
+  ```
+
+---
+
+```typescript
+type NonNullableUserPropertyKeys = {
+  [P in keyof User]: null extends User[P] ? never : P
+}[keyof User];
+```
+...
+
+```typescript
+type NonNullableUserPropertyKeys = {
+  name: null extends string ? never : "name";
+  email: null extends string | null ? never : "email";
+}[keyof User];
+```
+
+```typescript
+type NonNullableUserPropertyKeys =
+  | "name"
+  | never;
+  ```
+Finally...
+
+```typescript
+type NonNullableUserPropertyKeys = "name";
+```
+
+---
+
+## We can go further
+
+```typescript
+/**
+ * From T, pick a set of properties
+ * whose keys are in the union K
+ */
+type Pick<T, K extends keyof T> = {
+  [P in K]: T[P];
+};
+```
+
+```typescript
+type NonNullableProperties<T> = Pick<T, NonNullablePropertyKeys<T>>;
+
+type NonNullableUserProperties = NonNullableProperties<User>;
+// { name: string }
+```
+
+---
+
+## Type Inference in Conditional Types
+
+Another feature that conditional types support is inferring type variables using the `infer` keyword. 
+
+Within the extends clause of a conditional type, you can infer a type variable:
+
+```typescript
+type First<T> =
+    T extends [infer U, ...unknown[]]
+      ? U
+      : never;
+  
+  type SomeTupleType = [string, number, boolean];
+
+  type FirstElementType = First<SomeTupleType>; // string
+```
+
+---
+
+## Predefined Conditional Types
+
+### NonNullable
+Filters out the null and undefined types from T
+
+```typescript 
+type NonNullable<T> = T extends null | undefined ? never : T;
+  ```
+
+ ### Extract
+
+`Extract<T, U>` filters the type T keeping those types that are assignable to U.
+
+```typescript 
+type Extract<T, U> = T extends U ? T : never;
+  ```
+
+  Examples: 
+
+```typescript 
+type A = Extract<string | string[], any[]>;      // string[]
+type B = Extract<(() => void) | null, Function>; // () => void
+type C = Extract<200 | 400, 200 | 201>;          // 200
+type D = Extract<number, boolean>;               // never
+```
+
+---
+
+### Exclude
+
+`Exclude<T, U>` filters the type T and keep those types that are not assignable to U. It is the counterpart of the `Extract<T, U>` type.
+
+```typescript 
+type Exclude<T, U> = T extends U ? never : T;
+```
+
+Examples:
+
+```typescript
+type A = Exclude<string | string[], any[]>;      // string
+type B = Exclude<(() => void) | null, Function>; // null
+type C = Exclude<200 | 400, 200 | 201>;          // 400
+type D = Exclude<number, boolean>;               // number
+  ```
+
+
+---
+
+### ReturnType
+
+`ReturnType<T>` lets us extract the return type of a function type.
+
+```typescript 
+type ReturnType<T extends (...args: any[]) => any> =
+    T extends (...args: any[]) => infer R
+      ? R
+      : any;
+```
+
+Examples:
+
+```typescript
+type A = ReturnType<() => string>;         // string
+type B = ReturnType<() => () => any[]>;    // () => any[]
+type C = ReturnType<typeof Math.random>;   // number
+type D = ReturnType<typeof Array.isArray>; // boolean
+  ```
+
+---
+
+### Parameters
+
+`Parameters<T>` produces a tuple type with all the parameter types or the type **never** if T is not a function.
+
+```typescript 
+type Parameters<T extends (...args: any[]) => any> =
+    T extends (...args: infer P) => any
+      ? P
+      : never;
+```
+
+Examples:
+
+```typescript
+type A = Parameters<() => void>;           // []
+type B = Parameters<typeof Array.isArray>; // [any]
+type C = Parameters<typeof parseInt>;      // [string, (number | undefined)?]
+type D = Parameters<typeof Math.max>;      // number[]
+  ```
+
+---
+
+### ConstructorParameters
+
+Lets us extract all parameter types of a constructor function type. It produces a tuple type with all the parameter types (or the type never if T is not a function).
+
+Examples:
+
+```typescript
+type A = ConstructorParameters<ErrorConstructor>;
+// [(string | undefined)?]
+
+type B = ConstructorParameters<FunctionConstructor>;
+// string[]
+
+type C = ConstructorParameters<RegExpConstructor>;
+// [string, (string | undefined)?]
+```
+
+---
+
+### InstanceType
+
+Lets us extract the return type of a constructor function type. It is the equivalent of `ReturnType<T>` for constructor functions.
+
+Examples:
+
+```typescript
+type A = InstanceType<ErrorConstructor>;    // Error
+type B = InstanceType<FunctionConstructor>; // Function
+type C = InstanceType<RegExpConstructor>;   // RegExp
+```
+
+---
+
+class: center, middle, inverse
+# Typescript 2.9
+
+---
+
+## import types
+
+Using `import('mod')` in a type annotation allows for reaching in a module and accessing its exported declaration without importing it.
+
+Example:
+
+```typescript
+// module.d.ts
+
+export declare class Pet {
+   name: string;
+}
+```
+
+```typescript
+// global-script.ts
+
+function adopt(p: import("./module").Pet) {
+    console.log(`Adopting ${p.name}...`);
+}
+```
+
+
+---
+
+class: center, middle, inverse
+# Typescript 3.0
+
+---
+
+* #### Tuples in rest parameters and spread expressions
+
+* #### Generic rest parameters
+
+* #### Optional elements in tuple types
+
+  ```typescript
+  let t: [number, string?, boolean?];
+  t = [42, "hello", true];
+  t = [42, "hello"];
+  t = [42];
+  ```
+
+
+</textarea>
+  <script>
+    var slideshow = remark.create();
+  </script>
+</body>
+
+</html>
