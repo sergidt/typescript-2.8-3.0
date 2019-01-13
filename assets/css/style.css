@@ -5824,13 +5824,6 @@ body {
 	color: #AAA;
 }
 
-h1
-h2,
-h3 {
-	font-weight: 400;
-	color: #f3f3f3;
-}
-
 .remark-slide-content h1 {
 	font-size: 3em;
 }
@@ -5913,12 +5906,10 @@ li {
 }
 
 h1 {
-	color: white;
 	line-height: 46pt;
 }
 
 h2 {
-	color: white;
 	line-height: 36pt;
 }
 
@@ -5986,5 +5977,15 @@ h2 {
 .remark-code, .remark-inline-code { 
 	font-family: 'Ubuntu Mono'; 
 	padding: 5px;
-	color: #444;
+	background-color: transparent;
+	color: #00D6B5;
+}
+
+/*
+ Special styles
+*/
+
+.width-256-px > * {
+	max-width: 256px;
+	max-height: 256px;
 }

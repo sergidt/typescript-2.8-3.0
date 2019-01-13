@@ -15,6 +15,9 @@ class: top, top, inverse
 ---
 
 class: center, middle, inverse
+
+.width-256-px[![Left-aligned image](assets/img/ts-logo.png)]
+
 # Typescript
 ## Highlights from 2.8
 
@@ -31,14 +34,18 @@ class: center, middle, inverse
 * Uses
       * Functions that never return
       * Type guards that are never true
+
 ---
 
 ## Never type
 
 ## Characteristics
   * Is assignable to every type	
+
   * No type is assignable to never, except itself
+
   * In a function expression with no return type annotation, if the function has no return statements, or only returns statements with expressions of type never, and if the end point of the function is not reachable, the inferred return is never
+  
   * In a function with an explicit never return type annotation, all return statements (if any) must have expressions of type never and the end point of the function must not be reachable
 ---
 
@@ -375,7 +382,6 @@ function adopt(p: import("./module").Pet) {
 }
 ```
 
-
 ---
 
 class: center, middle, inverse
@@ -399,7 +405,14 @@ class: center, middle, inverse
 
 </textarea>
   <script>
-    var slideshow = remark.create();
+    var slideshow = remark.create({
+      ratio: '16:9',
+      highlightStyle: 'monokai',
+      highlightLanguage: 'typescript',
+      navigation: {
+        click: true
+      },
+    });
   </script>
 </body>
 
